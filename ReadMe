@@ -1,0 +1,57 @@
+This ReadMe file is about the scripts use to do experiments for subtask 1 and subtask 2 by Ling Liu.
+The results of the experiments are reported in the final project report, so, not repeated here.
+
+-----------------------------------------
+
+1. avgPred.py averages over the predictions of the 10 models to get the final intensity prediction for the test data.
+
+2. avgPred_newDataLatest.py averages over the predictions of the 10 models to get the final intensity prediction for the new data BP and Rishitha collected.
+
+3. dataLoaderRegresser.py contains functions to read in and preprocess the data for the LSTM model of intensity prediction. It is called by all the models for training intensity models and predicting intensities.
+
+------------------------------------------
+Scripts of main experiments for subtask 1:
+------------------------------------------
+
+4. lstmSentenceRegresser.py is the neural baseline system, i.e. the very start of our own system. It's architecture is a word embedding layer followed by a one-layer LSTM encoder followed by a linear layer to predict the intensity. It was construsted based mainly on the following to resources:
+ - https://github.com/MorvanZhou/PyTorch-Tutorial/blob/master/tutorial-contents/301_regression.py
+ - https://github.com/yuchenlin/lstm_sentence_classifier/blob/master/LSTM_sentence_classifier.py
+
+5. lstmSentenceRegresser_BiLSTM_dropout0.1.py is our improved neural system after experiments to adjust the architecture and tune hyperparameters. It's architecture is a word embedding layer followed by a 2-layer LSTM encoder with a dropout rate of 0.1, followed by a linear layer to predict intensity and a sigmoid layer to make sure the predicted intensity value is between 0 and 1. When training the model, 70% of the training data is used for each epoch. The training process is set to run 100 epochs and forced to stop early if the averaged loss on the dev set does not drop for 20 consecutive epochs.
+
+6. lstmSentenceRegresser_BiLSTM_dropout0.1_char.py is basically of the same structure as the model in 5. The difference is instead of using word-level embedding, character-level embedding is used. The result is not good, so we did not report the result of this model in our final report.
+
+7. lstmSentenceRegresser_BiLSTM_dropout0.1CharWord.py is also basically of the same structure as the model in 5. The difference is this script first train the neural model on character-level embedding and then fine-tune the model on word-level embedding, which was supposed to make use of information at bother the character and word levels. However, the result is not good, so we did not report the result of this model in our final report either.
+
+8. lstmSentenceRegresser_BiLSTM_dropout0.1_pretrainedWE.py is also basically of the same structure as the model in 5. However, it is used to experiment with pre-trained word embeddings. We experimented with fastText English word embedding (https://github.com/facebookresearch/fastText/blob/master/docs/crawl-vectors.md), also NTUA English tweet word embedding (https://github.com/cbaziotis/ntua-slp-semeval2018), and MUSE (crosslingual) English word embedding (https://github.com/facebookresearch/MUSE). To experiment with different word embeddings for this part, we need to modify dataLoaderRegresser.py in line 82, 83, or 84 to change the pre-trained word embeddings to use.
+
+9. NormalizedTrainData_pretrainedWE.py is also basically of the same structure as the model in 5. It is used to experiment with making the training data at different intensity ranges of the same amount. Note that for experiments in 5, 6, 7 and 8, the training and development data were first mixed and shuffled, and then 90% of the mixed data were used as training, and the remaining 10% were used as development set. For the experiment in this part, no shuffling was carried out, i.e. the training data were as they were provided by code in 10, and the development set is exactly the development set provided by the shared task organizer.
+
+10. traningDataExam.py plots the distribution of tweets in different intensity ranges. It also prepare the training data for experiment in 9, i.e. it makes tweets in all ranges of the same amount by randomly repeating tweet in the ranges with a smaller amount.
+
+----------------------------------------------------------------
+After all the experiments above (4, 5, 6, 7, 8, 9), we find that the neural model architecture and hyperparameter as described in 5 give us the best result when the NTUA pretrained word embedding is used. This is the models and pretrained word embedding we used to make predictions for the new data we collected ourselves for the subtask 3.
+----------------------------------------------------------------
+
+11. newDataBP.py, newDataProcessing.py, newDataRishitha.py, newDataRishitha_topic.py are the scripts to preprocess the new data we collected ourselves for the neural model to predict intensities.
+
+12. predictNewData_pretrainedWE_NTUA_AngerFear.py, and predictNewData_pretrainedWE_NTUA_JoySadness.py are the script to training the models and make predictions for the new data we collected ourselves.
+
+-------------------------------------
+The scripts below are for subtask 2:
+-------------------------------------
+13. translatePrepare.py preprocesses the Arabic and Spanish data for translation using Google translate. What it does is to take out only the tweet text and put them into smaller files since Google translate online has limitation on the size of the file to be translated each time.
+
+14. translatePostProcessing.py takes in the translated files of Arabic and Spanish together with the original Arabic and Spanish data, and output them into the shared task data format.
+
+15. EnArEs.py is for the first experiment in subtask 2, i.e. to use Spanish or Arabic data to train the model first and then fine-tune the model with the English data. The model of this experiment is the same as the model in 5 above, i.e. it takes the word as input and the word first goes to an embedding layer before going to the encoder.
+
+16. EnArEs_translate_NTUA.py is for the second experiment in subtask 2, i.e. to use the translated Spanish or Arabic data to train the model first and then fine-tune the model with the English data. The model of this experiment is the same as the model in 8 above. It used the NTUA pretrained word embedding.
+
+17. EnArEs_crossWE.py is for the third experiment in subtask 3, i.e. to use cross-lingual word embeddings on the Spanish or Arabic data to train the model first, and then fine-tune the model with the cross-lingual word embeddings on English data. The model for this experiment is the same as the model in 8 and 16. The difference is the word embeddings used in this experiment have been aligned in a common space. The cross-lingual word embedding used is from this resource: https://github.com/facebookresearch/MUSE.
+
+Note:
+- to experiment with using Spanish or Arabic for the three experiments in subtask 2, we need to change the code in 15, 16, 17 a little bit to change whether Spanish or Arabic is used.
+- Script 15 does not work for Arabic data. We got the following error while doing this experiment: "RuntimeError: cudaEventSynchronize in future::wait: device-side assert triggered". We tried to fix it, but failed to figure it out before the deadline. The guess is there may be some special symbols in the Arabic data which causes problems in the embedding layer.
+
+------------------------------------------------------------------------------------
